@@ -2,8 +2,34 @@ name: CI
 
 on:
   pull_request:
+    paths:
+      - .dockerignore
+      - .github/workflows/ci.yml
+      - .python-version
+      - Dockerfile
+      - alembic.ini
+      - compose.yaml
+      - migrations/**
+      - pyproject.toml
+      - scripts/**
+      - src/**
+      - tests/**
+      - uv.lock
   push:
     branches: [main]
+    paths:
+      - .dockerignore
+      - .github/workflows/ci.yml
+      - .python-version
+      - Dockerfile
+      - alembic.ini
+      - compose.yaml
+      - migrations/**
+      - pyproject.toml
+      - scripts/**
+      - src/**
+      - tests/**
+      - uv.lock
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -67,6 +93,9 @@ jobs:
           uv run alembic upgrade head
           uv run alembic downgrade base
           uv run alembic upgrade head
+
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
 
       - name: Build container
         run: docker build --tag ecommerce-catalog-service:ci .
