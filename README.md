@@ -1,8 +1,21 @@
 # E-commerce Catalog Service
 
+[![CI](https://github.com/bozhinov4/ecommerce-catalog-service/actions/workflows/ci.yml/badge.svg)](https://github.com/bozhinov4/ecommerce-catalog-service/actions/workflows/ci.yml)
+
 A production-minded FastAPI service for managing products and hierarchical
 categories. It provides complete CRUD APIs and composable product search by text,
 SKU, price, and category tree.
+
+## Assignment coverage
+
+| Requirement | Implementation |
+| --- | --- |
+| Product | Title, description, image, unique SKU, price, and category |
+| Category | Name and optional self-referencing parent |
+| Product CRUD | Create, list, read, replace, and delete endpoints |
+| Category CRUD | Create, list, read, replace, and guarded delete endpoints |
+| Product search | Title/SKU, exact SKU, price range, and category tree |
+| Search unit tests | Filters, hierarchy, sorting, pagination, and validation |
 
 ## Quick start
 
@@ -54,7 +67,7 @@ curl 'http://localhost:8000/api/v1/products/search?q=boots'
 Combine inclusive price bounds, a category tree, sorting, and pagination:
 
 ```bash
-curl 'http://localhost:8000/api/v1/products/search?min_price=50&max_price=150&category_id=CATEGORY_UUID&include_descendants=true&sort=price_asc&page=1&page_size=25'
+curl 'http://localhost:8000/api/v1/products/search?min_price=50&max_price=400&category_id=10000000-0000-4000-8000-000000000001&sort=price_asc'
 ```
 
 Supported parameters:
@@ -65,7 +78,7 @@ Supported parameters:
 | `sku` | Exact normalized SKU match |
 | `min_price`, `max_price` | Inclusive price range |
 | `category_id` | Category filter |
-| `include_descendants` | Include the complete category subtree; defaults to `true` |
+| `include_descendants` | Include the category subtree; defaults to `true` |
 | `sort` | `title_asc`, `price_asc`, `price_desc`, or `newest` |
 | `page`, `page_size` | Stable pagination with a maximum page size of 100 |
 
@@ -93,6 +106,7 @@ the managed demo dataset are preserved. Production remains empty unless
 Useful commands:
 
 ```bash
+make
 make format
 make lint
 make test
@@ -115,6 +129,21 @@ The database enforces unique SKUs, positive prices, valid category references, a
 restricted deletion. The service additionally prevents category cycles and deletion
 of categories that still contain products or children.
 
+## Deliberate scope
+
+The assignment is intentionally kept small and production-minded:
+
+- Authentication and authorization are deployment concerns and are not part of the
+  requested catalog behavior.
+- Product images are validated URLs; binary media storage belongs in an object store
+  or dedicated media service.
+- Updates use full `PUT` replacement. Partial `PATCH` behavior can be added without
+  changing the existing contract.
+- The health endpoint is a lightweight liveness check. A deployment-specific
+  readiness endpoint can include database health when required.
+- The repository publishes a deployable container but does not assume a particular
+  cloud provider or production platform.
+
 ## Project structure
 
 ```text
@@ -125,24 +154,28 @@ src/ecommerce_catalog_service/
 ├── main.py         # Application factory and entry point
 ├── models.py       # SQLAlchemy models
 ├── schemas.py      # Pydantic contracts
+├── seed.py         # Idempotent presentation data
 └── services.py     # CRUD and search operations
 migrations/         # Alembic revisions
-tests/              # API, persistence, health, and search tests
+tests/              # API, persistence, health, search, and seed tests
 ```
 
 ## Quality and delivery
 
-Every pull request runs formatting, linting, strict type checks, tests with branch
-coverage, migration checks against PostgreSQL, and a Docker build. Merges to `main`
-and version tags publish a multi-platform image to:
+Every code-related pull request runs formatting, linting, strict type checks, tests
+with 100% statement and branch coverage, reversible migrations against PostgreSQL,
+Compose validation, and a Docker build. Runtime changes on `main` and version tags
+publish a multi-platform image to:
 
-```text
-ghcr.io/bozhinov4/ecommerce-catalog-service
+```bash
+docker pull ghcr.io/bozhinov4/ecommerce-catalog-service:latest
 ```
 
 The test suite specifically covers text/SKU matching, inclusive price bounds,
 direct and recursive categories, combined filters, wildcard escaping, sorting,
-pagination, invalid queries, and empty results.
+pagination, invalid queries, and empty results. Fast unit tests use an isolated
+in-memory database; CI separately validates the schema and complete migration cycle
+against PostgreSQL 18.
 
 ## License
 
