@@ -1,4 +1,20 @@
-.PHONY: down format init install lint migrate run seed test up
+.DEFAULT_GOAL := help
+
+.PHONY: down format help init install lint migrate run seed test up
+
+help:
+	@printf '%s\n' \
+		'Available targets:' \
+		'  make init     Install dependencies, migrate, and seed demo data' \
+		'  make install  Install dependencies from the lockfile' \
+		'  make migrate  Apply database migrations' \
+		'  make seed     Create or refresh the demo catalog' \
+		'  make run      Start the local development server' \
+		'  make format   Format and automatically fix lint issues' \
+		'  make lint     Check formatting, linting, and types' \
+		'  make test     Run tests with coverage' \
+		'  make up       Build and start the Docker Compose stack' \
+		'  make down     Stop the Docker Compose stack'
 
 init: install migrate seed
 
