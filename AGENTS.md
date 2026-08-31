@@ -4,7 +4,6 @@
 
 - This repository is a FastAPI and PostgreSQL service managed with `uv`.
 - Use the `gh` CLI for GitHub platform operations.
-- Do not use Jira, Confluence, Compass, or other Atlassian services.
 
 ## GitHub Safety
 
