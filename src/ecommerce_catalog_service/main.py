@@ -5,6 +5,8 @@ from typing import Any
 import uvicorn
 from fastapi import FastAPI
 
+from ecommerce_catalog_service.api.categories import router as categories_router
+from ecommerce_catalog_service.api.products import router as products_router
 from ecommerce_catalog_service.config import get_settings
 
 
@@ -22,6 +24,8 @@ def create_app() -> FastAPI:
         version=settings.app_version,
         debug=settings.debug,
     )
+    application.include_router(categories_router, prefix="/api/v1")
+    application.include_router(products_router, prefix="/api/v1")
 
     application.add_api_route("/health", health, methods=["GET"], tags=["health"])
 
