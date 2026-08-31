@@ -1,16 +1,31 @@
 """Catalog business operations."""
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import NoReturn
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.elements import ColumnElement
 
 from ecommerce_catalog_service.models import Category, Product
-from ecommerce_catalog_service.schemas import CategoryWrite, ProductWrite
+from ecommerce_catalog_service.schemas import (
+    CategoryWrite,
+    ProductSearchParams,
+    ProductSort,
+    ProductWrite,
+)
+
+
+@dataclass(frozen=True, slots=True)
+class ProductSearchResult:
+    """Products and total count returned by a search."""
+
+    items: Sequence[Product]
+    total: int
 
 
 def _not_found(resource: str) -> NoReturn:
@@ -187,3 +202,79 @@ def delete_product(session: Session, product_id: UUID) -> None:
     product = get_product(session, product_id)
     session.delete(product)
     _commit(session, conflict_detail="Product could not be deleted")
+
+
+def _escape_like(value: str) -> str:
+    """Escape user text before placing it in a LIKE pattern."""
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def _category_filter(params: ProductSearchParams) -> ColumnElement[bool] | None:
+    if params.category_id is None:
+        return None
+    if not params.include_descendants:
+        return Product.category_id == params.category_id
+
+    category_tree = (
+        select(Category.id.label("id"))
+        .where(Category.id == params.category_id)
+        .cte("category_tree", recursive=True)
+    )
+    descendants = select(Category.id).join(
+        category_tree,
+        Category.parent_id == category_tree.c.id,
+    )
+    category_tree = category_tree.union_all(descendants)
+    return Product.category_id.in_(select(category_tree.c.id))
+
+
+def _apply_search_filters(
+    statement: Select[tuple[Product]],
+    params: ProductSearchParams,
+) -> Select[tuple[Product]]:
+    if params.q is not None:
+        pattern = f"%{_escape_like(params.q)}%"
+        statement = statement.where(
+            or_(
+                Product.title.ilike(pattern, escape="\\"),
+                Product.sku.ilike(pattern, escape="\\"),
+            )
+        )
+    if params.sku is not None:
+        statement = statement.where(Product.sku == params.sku)
+    if params.min_price is not None:
+        statement = statement.where(Product.price >= params.min_price)
+    if params.max_price is not None:
+        statement = statement.where(Product.price <= params.max_price)
+    category_filter = _category_filter(params)
+    if category_filter is not None:
+        statement = statement.where(category_filter)
+    return statement
+
+
+def _apply_search_order(
+    statement: Select[tuple[Product]],
+    sort: ProductSort,
+) -> Select[tuple[Product]]:
+    orderings = {
+        ProductSort.TITLE_ASC: (Product.title.asc(), Product.id.asc()),
+        ProductSort.PRICE_ASC: (Product.price.asc(), Product.id.asc()),
+        ProductSort.PRICE_DESC: (Product.price.desc(), Product.id.asc()),
+        ProductSort.NEWEST: (Product.created_at.desc(), Product.id.desc()),
+    }
+    return statement.order_by(*orderings[sort])
+
+
+def search_products(
+    session: Session,
+    params: ProductSearchParams,
+) -> ProductSearchResult:
+    """Search products using composable, indexed filters."""
+    filtered = _apply_search_filters(select(Product), params)
+    total = session.scalar(select(func.count()).select_from(filtered.subquery())) or 0
+    statement = (
+        _apply_search_order(filtered, params.sort)
+        .offset((params.page - 1) * params.page_size)
+        .limit(params.page_size)
+    )
+    return ProductSearchResult(items=session.scalars(statement).all(), total=total)

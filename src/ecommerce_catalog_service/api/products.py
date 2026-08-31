@@ -1,12 +1,18 @@
 """Product CRUD endpoints."""
 
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Query, Response, status
 
 from ecommerce_catalog_service import services
 from ecommerce_catalog_service.api.dependencies import DatabaseSession, Limit, Offset
-from ecommerce_catalog_service.schemas import ProductRead, ProductWrite
+from ecommerce_catalog_service.schemas import (
+    ProductPage,
+    ProductRead,
+    ProductSearchParams,
+    ProductWrite,
+)
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -26,6 +32,21 @@ def list_products(
     """List products with bounded pagination."""
     products = services.list_products(session, offset=offset, limit=limit)
     return [ProductRead.model_validate(product) for product in products]
+
+
+@router.get("/search")
+def search_products(
+    session: DatabaseSession,
+    params: Annotated[ProductSearchParams, Query()],
+) -> ProductPage:
+    """Search and filter products."""
+    result = services.search_products(session, params)
+    return ProductPage.create(
+        items=[ProductRead.model_validate(product) for product in result.items],
+        page=params.page,
+        page_size=params.page_size,
+        total=result.total,
+    )
 
 
 @router.get("/{product_id}")
