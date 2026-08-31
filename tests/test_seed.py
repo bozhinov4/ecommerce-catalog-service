@@ -1,8 +1,10 @@
 from decimal import Decimal
 
+import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from ecommerce_catalog_service import seed
 from ecommerce_catalog_service.models import Category, Product
 from ecommerce_catalog_service.seed import CATEGORIES, PRODUCTS, seed_demo_catalog
 
@@ -56,3 +58,17 @@ def test_demo_seed_preserves_unmanaged_records(
             )
             == 1
         )
+
+
+def test_seed_command_reports_summary(
+    session_factory: sessionmaker[Session],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(seed, "get_session_factory", lambda: session_factory)
+
+    seed.main()
+
+    assert capsys.readouterr().out == (
+        "Demo catalog ready: 6 categories, 8 products (14 created).\n"
+    )

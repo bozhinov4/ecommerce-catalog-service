@@ -1,8 +1,8 @@
 """Idempotent demo catalog seeding."""
 
+import sys
 from dataclasses import dataclass
 from decimal import Decimal
-from sys import stdout
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -185,12 +185,8 @@ def main() -> None:
     """Seed the configured database and report the resulting catalog size."""
     with get_session_factory()() as session:
         summary = seed_demo_catalog(session)
-    stdout.write(
+    sys.stdout.write(
         f"Demo catalog ready: {summary.categories} categories, "
         f"{summary.products} products "
         f"({summary.categories_created + summary.products_created} created).\n"
     )
-
-
-if __name__ == "__main__":
-    main()

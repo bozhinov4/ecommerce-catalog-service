@@ -66,6 +66,16 @@ def test_category_replace_and_missing_parent(client: TestClient) -> None:
 
     assert response.status_code == 200
     assert response.json()["name"] == "Updated Footwear"
+
+    self_parent_response = client.put(
+        f"/api/v1/categories/{category['id']}",
+        json={"name": "Invalid hierarchy", "parent_id": category["id"]},
+    )
+    assert self_parent_response.status_code == 409
+    assert self_parent_response.json()["detail"] == (
+        "A category cannot be its own parent"
+    )
+
     assert (
         client.post(
             "/api/v1/categories",
