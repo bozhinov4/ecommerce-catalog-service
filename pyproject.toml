@@ -1,0 +1,70 @@
+[project]
+name = "ecommerce-catalog-service"
+version = "0.1.0"
+description = "Production-ready product catalog API built with FastAPI."
+readme = "README.md"
+authors = [
+    { name = "Atanas Bozhinov", email = "atanasbojinov4@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.16,<2",
+    "fastapi>=0.116,<1",
+    "psycopg[binary]>=3.2,<4",
+    "pydantic-settings>=2.10,<3",
+    "sqlalchemy>=2.0,<3",
+    "uvicorn[standard]>=0.35,<1",
+]
+
+[project.scripts]
+catalog-api = "ecommerce_catalog_service.main:run"
+
+[build-system]
+requires = ["uv_build>=0.12.7,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.12.0",
+    "pyright>=1.1,<2",
+    "pytest>=8.4,<9",
+    "pytest-cov>=6.2,<7",
+    "ruff>=0.12,<1",
+    "testcontainers[postgres]>=4.12,<5",
+]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["ecommerce_catalog_service"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.13"
+typeCheckingMode = "strict"
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812",
+    "CPY001",
+    "D203",
+    "D213",
+    "D100",
+    "D104",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN", "D", "PLR2004", "S101"]
