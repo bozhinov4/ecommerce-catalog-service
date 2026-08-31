@@ -4,6 +4,16 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
+    paths:
+      - .dockerignore
+      - .github/workflows/publish.yml
+      - Dockerfile
+      - alembic.ini
+      - migrations/**
+      - pyproject.toml
+      - scripts/**
+      - src/**
+      - uv.lock
 
 concurrency:
   group: publish-${{ github.ref }}
