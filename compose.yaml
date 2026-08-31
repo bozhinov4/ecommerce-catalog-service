@@ -1,0 +1,32 @@
+services:
+  database:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: catalog
+      POSTGRES_PASSWORD: catalog
+      POSTGRES_USER: catalog
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalog -d catalog"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    ports:
+      - "5432:5432"
+    volumes:
+      - catalog-data:/var/lib/postgresql
+
+  api:
+    build:
+      context: .
+    environment:
+      CATALOG_DATABASE_URL: postgresql+psycopg://catalog:catalog@database:5432/catalog
+      CATALOG_WORKERS: 2
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  catalog-data:
