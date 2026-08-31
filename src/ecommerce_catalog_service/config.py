@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "E-commerce Catalog Service"
-    app_version: str = "0.1.0"
+    app_version: str = "0.1.1"
     debug: bool = False
     database_url: str = Field(
         default="postgresql+psycopg://catalog:catalog@localhost:5432/catalog",

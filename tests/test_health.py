@@ -9,7 +9,7 @@ def test_health_returns_service_status() -> None:
     response = TestClient(app).get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "version": "0.1.0"}
+    assert response.json() == {"status": "ok", "version": "0.1.1"}
 
 
 def test_run_starts_development_server(monkeypatch: pytest.MonkeyPatch) -> None:
