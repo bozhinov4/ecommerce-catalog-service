@@ -118,6 +118,8 @@ make migrate
 - **FastAPI** keeps the assignment focused and generates OpenAPI documentation.
 - **PostgreSQL** provides predictable production behavior for recursive category
   queries, decimal prices, constraints, and indexed case-insensitive search.
+- **Purpose-built indexes** cover exact and partial SKU lookup, partial title search,
+  category-price filtering, and standalone price ranges.
 - **SQLAlchemy 2 and Alembic** keep persistence explicit and migrations reversible.
 - **Synchronous database sessions** reduce incidental async complexity for this
   database-bound service while remaining safe under FastAPI's worker model.

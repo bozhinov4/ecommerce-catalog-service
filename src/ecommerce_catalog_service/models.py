@@ -54,6 +54,19 @@ class Product(TimestampMixin, Base):
     __table_args__ = (
         CheckConstraint("price > 0", name="ck_products_price_positive"),
         Index("ix_products_category_price", "category_id", "price"),
+        Index("ix_products_price", "price"),
+        Index(
+            "ix_products_title_trgm",
+            "title",
+            postgresql_using="gin",
+            postgresql_ops={"title": "gin_trgm_ops"},
+        ),
+        Index(
+            "ix_products_sku_trgm",
+            "sku",
+            postgresql_using="gin",
+            postgresql_ops={"sku": "gin_trgm_ops"},
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)

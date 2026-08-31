@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import TYPE_CHECKING, cast
 from unittest.mock import Mock
 from uuid import uuid4
 
@@ -11,6 +12,9 @@ from ecommerce_catalog_service import services
 from ecommerce_catalog_service.database import get_db, get_session_factory
 from ecommerce_catalog_service.models import Category, Product
 from ecommerce_catalog_service.schemas import CategoryWrite
+
+if TYPE_CHECKING:
+    from sqlalchemy import Index, Table
 
 
 def test_database_dependency_yields_session() -> None:
@@ -37,6 +41,23 @@ def test_catalog_models_keep_relationships() -> None:
 
     assert product.category.name == "Boots"
     assert get_session_factory().kw["expire_on_commit"] is False
+
+
+def test_product_indexes_match_search_filters() -> None:
+    product_table = cast("Table", Product.__table__)
+    indexes: dict[str, Index] = {
+        str(index.name): index
+        for index in product_table.indexes
+        if index.name is not None
+    }
+
+    assert {column.name for column in indexes["ix_products_price"].columns} == {"price"}
+    assert indexes["ix_products_title_trgm"].dialect_options["postgresql"]["ops"] == {
+        "title": "gin_trgm_ops"
+    }
+    assert indexes["ix_products_sku_trgm"].dialect_options["postgresql"]["ops"] == {
+        "sku": "gin_trgm_ops"
+    }
 
 
 def test_create_rolls_back_integrity_errors(
