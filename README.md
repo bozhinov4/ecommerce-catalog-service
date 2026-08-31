@@ -15,6 +15,8 @@ docker compose up --build
 ```
 
 The container waits for PostgreSQL, applies all migrations, and starts the API.
+For presentation convenience, Docker Compose also loads six categories and eight
+products. The seed is idempotent, so restarts do not create duplicates.
 
 - Interactive API documentation: <http://localhost:8000/docs>
 - OpenAPI schema: <http://localhost:8000/openapi.json>
@@ -77,6 +79,16 @@ uv sync --locked
 uv run alembic upgrade head
 uv run catalog-api
 ```
+
+Initialize dependencies, the schema, and the demo catalog in one command:
+
+```bash
+make init
+```
+
+To refresh only the demo records later, run `make seed`. Existing records outside
+the managed demo dataset are preserved. Production remains empty unless
+`CATALOG_SEED_DEMO=true` is explicitly configured.
 
 Useful commands:
 

@@ -18,6 +18,7 @@ dependencies = [
 
 [project.scripts]
 catalog-api = "ecommerce_catalog_service.main:run"
+catalog-seed = "ecommerce_catalog_service.seed:main"
 
 [build-system]
 requires = ["uv_build>=0.12.7,<0.13.0"]

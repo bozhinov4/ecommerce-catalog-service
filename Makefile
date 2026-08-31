@@ -1,4 +1,6 @@
-.PHONY: format install lint migrate run test up down
+.PHONY: down format init install lint migrate run seed test up
+
+init: install migrate seed
 
 install:
 	uv sync --locked
@@ -17,6 +19,9 @@ test:
 
 migrate:
 	uv run alembic upgrade head
+
+seed:
+	uv run catalog-seed
 
 run:
 	uv run catalog-api

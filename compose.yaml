@@ -20,6 +20,7 @@ services:
       context: .
     environment:
       CATALOG_DATABASE_URL: postgresql+psycopg://catalog:catalog@database:5432/catalog
+      CATALOG_SEED_DEMO: "true"
       CATALOG_WORKERS: 2
     depends_on:
       database:
